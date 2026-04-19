@@ -121,12 +121,19 @@ jobs:
           echo "tag=$TAG"   >> "$GITHUB_OUTPUT"
           echo "image=$IMG" >> "$GITHUB_OUTPUT"
 
-      - name: Verify docker available
+      - name: Verify docker available + ensure buildx
         shell: bash
         run: |
           set -e
           docker version
-          docker buildx version || docker buildx install || true
+          if ! docker buildx version >/dev/null 2>&1; then
+            echo "buildx missing → install plugin to ~/.docker/cli-plugins"
+            mkdir -p "$HOME/.docker/cli-plugins"
+            BUILDX_VER=v0.17.1
+            curl -sSfL "https://github.com/docker/buildx/releases/download/${BUILDX_VER}/buildx-${BUILDX_VER}.linux-amd64" \
+              -o "$HOME/.docker/cli-plugins/docker-buildx"
+            chmod +x "$HOME/.docker/cli-plugins/docker-buildx"
+          fi
           docker buildx version
 
       - name: Login to Harbor
