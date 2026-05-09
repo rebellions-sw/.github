@@ -1,0 +1,28 @@
+---
+# Sigstore policy-controller ClusterImagePolicy.
+# Requires every container image whose ref matches harbor.infra.rblnconnect.ai/rbcn/**
+# to carry a valid Cosign signature verifiable with the embedded public key
+# (matches rbcn-k8s-policies/cosign/cosign.pub).
+#
+# Enforcement is opt-in per namespace via the label
+#   policy.sigstore.dev/include: "true"
+# (set by the rbcn-iac-ansible k8s_policy_controller role on workload namespaces).
+
+apiVersion: policy.sigstore.dev/v1beta1
+kind: ClusterImagePolicy
+metadata:
+  name: rbcn-cosign-required
+  labels:
+    rbcn.io/managed-by: rbcn-k8s-policies
+spec:
+  images:
+    - glob: "harbor.infra.rblnconnect.ai/rbcn/**"
+  authorities:
+    - name: rbcn-cosign-key
+      key:
+        data: |
+          -----BEGIN PUBLIC KEY-----
+          MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/xwv804bvEtoBRwi/UwlBxJvTyMG
+          VSsmi8RA0L8D0aDwhvl9sM6LzG0gTodCYIgDr0HEZ7S59+BeBRcJV8mZnw==
+          -----END PUBLIC KEY-----
+  mode: enforce
